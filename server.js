@@ -11,12 +11,27 @@ app.use(cors({ origin: "*" })); // Enable CORS for all routes
 // Connect to MongoDB
 connectDB();
 
-// Routes
-app.use('/clients', require('./routes/clients'));
-app.use('/services', require('./routes/services'));
-app.use('/invoices', require('./routes/invoices'));
-app.use('/payments', require('./routes/payments'));
-app.use('/branches', require('./routes/branches')); // Add branch routes
+// Routes with error checking
+const routes = {
+  '/clients': './routes/clients',
+  '/services': './routes/services',
+  '/invoices': './routes/invoices',
+  '/payments': './routes/payments',
+  '/branches': './routes/branches'
+};
+
+Object.entries(routes).forEach(([path, routeFile]) => {
+  try {
+    const router = require(routeFile);
+    if (typeof router === 'function') {
+      app.use(path, router);
+    } else {
+      console.error(`Warning: Router at ${routeFile} is not a function`);
+    }
+  } catch (error) {
+    console.error(`Error loading route ${routeFile}:`, error);
+  }
+});
 
 // Debugging log to confirm server is running
 app.listen(process.env.PORT, () => {
